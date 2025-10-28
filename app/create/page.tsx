@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Header } from "@/components/header"
-import { Plus, Trash2, ArrowLeft } from "lucide-react"
+import { Plus, Trash2, ArrowLeft, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { apiClient } from "@/lib/api"
 
 export default function CreatePoll() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function CreatePoll() {
   const [description, setDescription] = useState("")
   const [options, setOptions] = useState(["", ""])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState("")
 
   const addOption = () => {
     setOptions([...options, ""])
@@ -37,26 +39,41 @@ export default function CreatePoll() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setError("")
 
     // Validate
     if (!title.trim()) {
-      alert("Please enter a poll title")
+      setError("Please enter a poll title")
       setIsSubmitting(false)
       return
     }
 
     const validOptions = options.filter((opt) => opt.trim())
     if (validOptions.length < 2) {
-      alert("Please provide at least 2 options")
+      setError("Please provide at least 2 options")
       setIsSubmitting(false)
       return
     }
 
-    // Simulate API call
-    setTimeout(() => {
-      router.push("/")
+    try {
+      const response = await apiClient.createPoll({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        options: validOptions,
+        allow_multiple: false, // Default to single choice
+      })
+
+      if (response.success && response.data) {
+        router.push(`/poll/${response.data.id}`)
+      } else {
+        setError(response.message || "Failed to create poll")
+      }
+    } catch (error) {
+      console.error("Error creating poll:", error)
+      setError("An unexpected error occurred")
+    } finally {
       setIsSubmitting(false)
-    }, 1000)
+    }
   }
 
   return (
@@ -78,6 +95,12 @@ export default function CreatePoll() {
         </div>
 
         <Card className="p-8 border-border/50 bg-card/50 backdrop-blur-sm">
+          {error && (
+            <div className="mb-6 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm">
+              <AlertCircle className="w-4 h-4" />
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Title */}
             <div className="space-y-3">

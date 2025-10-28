@@ -4,13 +4,17 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { BarChart3, Mail, Lock, User, ArrowRight } from "lucide-react"
+import { BarChart3, Mail, Lock, User, ArrowRight, AlertCircle } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function SignUpPage() {
+  const router = useRouter()
+  const { register, isAuthenticated, isLoading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -18,16 +22,46 @@ export default function SignUpPage() {
     confirmPassword: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    router.push("/")
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
 
-    // TODO: Implement actual signup logic
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    // Validate passwords match
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      setIsLoading(false)
+      return
+    }
 
-    console.log("[v0] Sign up form submitted:", formData)
-    setIsLoading(false)
+    // Validate password length
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long")
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const result = await register(formData.name, formData.email, formData.password)
+      
+      if (result.success) {
+        router.push("/")
+      } else {
+        setError(result.error || "Registration failed")
+      }
+    } catch (error) {
+      setError("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -58,6 +92,12 @@ export default function SignUpPage() {
             <CardDescription className="text-center">Enter your details to get started with QuickPoll</CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm">
+                <AlertCircle className="w-4 h-4" />
+                {error}
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Full Name</Label>

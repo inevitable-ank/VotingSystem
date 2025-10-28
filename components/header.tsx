@@ -2,11 +2,13 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { BarChart3, Menu, X } from "lucide-react"
+import { BarChart3, Menu, X, User, LogOut } from "lucide-react"
 import { useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const { user, isAuthenticated, logout } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
@@ -32,16 +34,35 @@ export function Header() {
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
-          <Link href="/login">
-            <Button variant="ghost" className="text-sm">
-              Sign In
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground text-sm">
-              Sign Up
-            </Button>
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <span className="text-sm text-muted-foreground">
+                Welcome, {user?.username}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={logout}
+                className="text-sm"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Logout
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link href="/login">
+                <Button variant="ghost" className="text-sm">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground text-sm">
+                  Sign Up
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -66,16 +87,35 @@ export function Header() {
                 Create
               </Link>
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
-                <Link href="/login" className="w-full">
-                  <Button variant="outline" className="w-full bg-transparent">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/signup" className="w-full">
-                  <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground">
-                    Sign Up
-                  </Button>
-                </Link>
+                {isAuthenticated ? (
+                  <>
+                    <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+                      <User className="w-4 h-4" />
+                      {user?.username}
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full bg-transparent"
+                      onClick={logout}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login" className="w-full">
+                      <Button variant="outline" className="w-full bg-transparent">
+                        Sign In
+                      </Button>
+                    </Link>
+                    <Link href="/signup" className="w-full">
+                      <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground">
+                        Sign Up
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </nav>
           </div>

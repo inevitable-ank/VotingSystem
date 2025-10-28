@@ -4,30 +4,50 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
-import { BarChart3, Mail, Lock, ArrowRight } from "lucide-react"
+import { BarChart3, Mail, Lock, ArrowRight, AlertCircle } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function LoginPage() {
+  const router = useRouter()
+  const { login, isAuthenticated, isLoading: authLoading } = useAuth()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
     remember: false,
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState("")
+
+  // Redirect if already authenticated
+  if (isAuthenticated) {
+    router.push("/")
+    return null
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError("")
 
-    // TODO: Implement actual login logic
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    console.log("[v0] Login form submitted:", formData)
-    setIsLoading(false)
+    try {
+      const result = await login(formData.email, formData.password)
+      
+      if (result.success) {
+        router.push("/")
+      } else {
+        setError(result.error || "Login failed")
+      }
+    } catch (error) {
+      setError("An unexpected error occurred")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -58,6 +78,12 @@ export default function LoginPage() {
             <CardDescription className="text-center">Sign in to your account to continue</CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2 text-destructive text-sm">
+                <AlertCircle className="w-4 h-4" />
+                {error}
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>

@@ -6,77 +6,78 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Header } from "@/components/header"
-import { Heart, Share2, ArrowLeft, MessageCircle } from "lucide-react"
+import { Heart, Share2, ArrowLeft, MessageCircle, AlertCircle, Loader2 } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
+import { apiClient, Poll, VoteStats, getAnonymousId } from "@/lib/api"
+import { useAuth } from "@/contexts/AuthContext"
 
-interface Option {
-  id: string
-  text: string
-  vote_count: number
-}
-
-interface Poll {
-  id: string
-  title: string
-  description?: string
-  options: Option[]
-  total_votes: number
-  likes_count: number
-  created_at: string
-}
+// Poll and Option interfaces are now imported from lib/api
 
 const CHART_COLORS = ["#7c3aed", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"]
 
 export default function PollDetail() {
   const params = useParams()
   const pollId = params.id as string
+  const { isAuthenticated } = useAuth()
   const [poll, setPoll] = useState<Poll | null>(null)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isVoting, setIsVoting] = useState(false)
   const [isLiked, setIsLiked] = useState(false)
   const [likesCount, setLikesCount] = useState(0)
   const [hasVoted, setHasVoted] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState("")
 
   useEffect(() => {
-    // Simulate fetching poll data
-    const mockPoll: Poll = {
-      id: pollId,
-      title: "What's your favorite programming language?",
-      description: "Help us understand the developer community preferences",
-      options: [
-        { id: "opt1", text: "TypeScript", vote_count: 342 },
-        { id: "opt2", text: "Python", vote_count: 289 },
-        { id: "opt3", text: "Go", vote_count: 156 },
-        { id: "opt4", text: "Rust", vote_count: 213 },
-      ],
-      total_votes: 1000,
-      likes_count: 234,
-      created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    const fetchPoll = async () => {
+      try {
+        setIsLoading(true)
+        setError("")
+        const response = await apiClient.getPoll(pollId)
+        
+        if (response.success && response.data) {
+          setPoll(response.data)
+          setLikesCount(response.data.likes_count)
+        } else {
+          setError(response.message || "Failed to load poll")
+        }
+      } catch (error) {
+        console.error("Error fetching poll:", error)
+        setError("Failed to load poll")
+      } finally {
+        setIsLoading(false)
+      }
     }
 
-    setPoll(mockPoll)
-    setLikesCount(mockPoll.likes_count)
+    fetchPoll()
   }, [pollId])
 
   const handleVote = async () => {
-    if (!selectedOption || hasVoted) return
+    if (!selectedOption || hasVoted || !poll) return
 
     setIsVoting(true)
-    // Simulate API call
-    setTimeout(() => {
-      if (poll) {
-        const updatedPoll = {
-          ...poll,
-          options: poll.options.map((opt) =>
-            opt.id === selectedOption ? { ...opt, vote_count: opt.vote_count + 1 } : opt,
-          ),
-          total_votes: poll.total_votes + 1,
+    try {
+      // Get anonymous ID for non-authenticated users
+      const anonId = !isAuthenticated ? getAnonymousId() : undefined
+      
+      const response = await apiClient.castVote(pollId, [selectedOption], anonId)
+      
+      if (response.success && response.data) {
+        // Refresh poll data to get updated vote counts
+        const pollResponse = await apiClient.getPoll(pollId)
+        if (pollResponse.success && pollResponse.data) {
+          setPoll(pollResponse.data)
         }
-        setPoll(updatedPoll)
         setHasVoted(true)
+      } else {
+        setError(response.message || "Failed to cast vote")
       }
+    } catch (error) {
+      console.error("Error casting vote:", error)
+      setError("Failed to cast vote")
+    } finally {
       setIsVoting(false)
-    }, 500)
+    }
   }
 
   const handleLike = () => {
@@ -84,12 +85,48 @@ export default function PollDetail() {
     setLikesCount(isLiked ? likesCount - 1 : likesCount + 1)
   }
 
+  if (isLoading) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Loader2 className="w-5 h-5 animate-spin" />
+            Loading poll...
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <Header />
+        <div className="flex items-center justify-center h-96">
+          <Card className="p-8 text-center border-destructive/20 bg-destructive/5">
+            <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-destructive mb-2">Failed to load poll</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            >
+              Try Again
+            </Button>
+          </Card>
+        </div>
+      </main>
+    )
+  }
+
   if (!poll) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
         <Header />
         <div className="flex items-center justify-center h-96">
-          <div className="animate-pulse text-muted-foreground">Loading poll...</div>
+          <div className="text-muted-foreground">Poll not found</div>
         </div>
       </main>
     )
