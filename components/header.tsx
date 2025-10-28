@@ -31,9 +31,16 @@ export function Header() {
           </Link>
         </nav>
 
-        <div className="hidden md:flex items-center gap-4">
-          <Link href="/create">
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Create Poll</Button>
+        <div className="hidden md:flex items-center gap-3">
+          <Link href="/login">
+            <Button variant="ghost" className="text-sm">
+              Sign In
+            </Button>
+          </Link>
+          <Link href="/signup">
+            <Button className="bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground text-sm">
+              Sign Up
+            </Button>
           </Link>
         </div>
 
@@ -58,9 +65,18 @@ export function Header() {
               <Link href="/create" className="text-sm font-medium hover:text-primary transition-colors">
                 Create
               </Link>
-              <Link href="/create" className="w-full">
-                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">Create Poll</Button>
-              </Link>
+              <div className="flex flex-col gap-2 pt-2 border-t border-border">
+                <Link href="/login" className="w-full">
+                  <Button variant="outline" className="w-full bg-transparent">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/signup" className="w-full">
+                  <Button className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 text-primary-foreground">
+                    Sign Up
+                  </Button>
+                </Link>
+              </div>
             </nav>
           </div>
         )}
