@@ -21,8 +21,11 @@ export default function Home() {
         setIsLoading(true)
         const response = await apiClient.getPolls(0, 6) // Get first 6 polls
         
-        if (response.success && response.data) {
+        if (response.success && response.data && Array.isArray(response.data.data)) {
           setPolls(response.data.data)
+        } else {
+          console.warn("Invalid polls response:", response)
+          setPolls([])
         }
       } catch (error) {
         console.error("Error fetching polls:", error)
@@ -76,7 +79,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Polls</p>
-                  <p className="text-2xl font-bold">{polls.length}</p>
+                  <p className="text-2xl font-bold">{polls?.length || 0}</p>
                 </div>
               </div>
             </Card>
@@ -88,7 +91,7 @@ export default function Home() {
                 <div>
                   <p className="text-sm text-muted-foreground">Total Votes</p>
                   <p className="text-2xl font-bold">
-                    {polls.reduce((sum, p) => sum + p.total_votes, 0).toLocaleString()}
+                    {(polls || []).reduce((sum, p) => sum + p.total_votes, 0).toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -123,7 +126,7 @@ export default function Home() {
               </Card>
             ))}
           </div>
-        ) : polls.length > 0 ? (
+        ) : polls && polls.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {polls.map((poll, index) => (
               <div key={poll.id} className="animate-slide-in-up" style={{ animationDelay: `${index * 100}ms` }}>
