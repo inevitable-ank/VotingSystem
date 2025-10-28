@@ -23,6 +23,9 @@ export default function SignUpPage() {
   })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  
+  // Generate username from full name
+  const generatedUsername = formData.name.toLowerCase().replace(/\s+/g, '')
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -50,7 +53,9 @@ export default function SignUpPage() {
     }
 
     try {
-      const result = await register(formData.name, formData.email, formData.password)
+      // Convert full name to valid username (no spaces, lowercase)
+      const username = formData.name.toLowerCase().replace(/\s+/g, '')
+      const result = await register(username, formData.email, formData.password)
       
       if (result.success) {
         router.push("/")
@@ -113,6 +118,11 @@ export default function SignUpPage() {
                     required
                   />
                 </div>
+                {formData.name && (
+                  <div className="text-sm text-muted-foreground">
+                    <span className="font-medium">Username:</span> <span className="font-mono bg-muted px-2 py-1 rounded">{generatedUsername}</span>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
