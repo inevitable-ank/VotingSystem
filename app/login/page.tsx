@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -25,10 +25,11 @@ export default function LoginPage() {
   const [error, setError] = useState("")
 
   // Redirect if already authenticated
-  if (isAuthenticated) {
-    router.push("/")
-    return null
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/")
+    }
+  }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
