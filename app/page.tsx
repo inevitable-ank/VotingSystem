@@ -23,11 +23,11 @@ export default function Home() {
     const fetchPolls = async () => {
       try {
         setIsLoading(true)
-        const [pollsRes, trendingRes, statsRes, usersRes] = await Promise.all([
+        const [pollsRes, trendingRes, statsRes, usersCountRes] = await Promise.all([
           apiClient.getPolls(0, 6),
           apiClient.getTrendingPolls(0, 6),
           apiClient.getPollsStats(),
-          apiClient.getUsers(0, 1),
+          apiClient.getUsersCount(),
         ])
 
         if (pollsRes.success && pollsRes.data && Array.isArray(pollsRes.data.data)) {
@@ -57,9 +57,8 @@ export default function Home() {
           setTotalVotes(0)
         }
 
-        if (usersRes.success && usersRes.data) {
-          // users list returns paginated envelope
-          const total = (usersRes.data as any).total
+        if (usersCountRes.success && usersCountRes.data) {
+          const total = (usersCountRes.data as any).total
           setCommunityCount(typeof total === 'number' ? total : 0)
         } else {
           setCommunityCount(0)

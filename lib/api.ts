@@ -261,6 +261,10 @@ class ApiClient {
     // limit defaults to 1 to cheaply retrieve the total count from pagination
     return this.request<PaginatedResponse<User>>(`/api/users?skip=${skip}&limit=${limit}`)
   }
+
+  async getUsersCount(): Promise<ApiResponse<{ total: number }>> {
+    return this.request<{ total: number }>(`/api/users/count`)
+  }
   async getUser(userId: string): Promise<ApiResponse<User>> {
     return this.request<User>(`/api/users/${userId}`)
   }
