@@ -184,6 +184,14 @@ class ApiClient {
     return this.request<PaginatedResponse<Poll>>(`/api/polls?skip=${skip}&limit=${limit}`)
   }
 
+  async getTrendingPolls(skip = 0, limit = 20): Promise<ApiResponse<Poll[]>> {
+    return this.request<Poll[]>(`/api/polls/trending?skip=${skip}&limit=${limit}`)
+  }
+
+  async getPollsStats(): Promise<ApiResponse<any>> {
+    return this.request<any>('/api/polls/stats')
+  }
+
   async getPoll(pollId: string): Promise<ApiResponse<Poll>> {
     return this.request<Poll>(`/api/polls/${pollId}`)
   }
@@ -249,6 +257,10 @@ class ApiClient {
   }
 
   // User endpoints
+  async getUsers(skip = 0, limit = 1): Promise<ApiResponse<PaginatedResponse<User>>> {
+    // limit defaults to 1 to cheaply retrieve the total count from pagination
+    return this.request<PaginatedResponse<User>>(`/api/users?skip=${skip}&limit=${limit}`)
+  }
   async getUser(userId: string): Promise<ApiResponse<User>> {
     return this.request<User>(`/api/users/${userId}`)
   }

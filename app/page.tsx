@@ -13,24 +13,65 @@ import { apiClient, Poll } from "@/lib/api"
 
 export default function Home() {
   const [polls, setPolls] = useState<Poll[]>([])
+  const [trending, setTrending] = useState<Poll[]>([])
+  const [activePolls, setActivePolls] = useState<number>(0)
+  const [totalVotes, setTotalVotes] = useState<number>(0)
+  const [communityCount, setCommunityCount] = useState<number>(0)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     const fetchPolls = async () => {
       try {
         setIsLoading(true)
-        const response = await apiClient.getPolls(0, 6) // Get first 6 polls
-        
-        if (response.success && response.data && Array.isArray(response.data.data)) {
-          setPolls(response.data.data)
+        const [pollsRes, trendingRes, statsRes, usersRes] = await Promise.all([
+          apiClient.getPolls(0, 6),
+          apiClient.getTrendingPolls(0, 6),
+          apiClient.getPollsStats(),
+          apiClient.getUsers(0, 1),
+        ])
+
+        if (pollsRes.success && pollsRes.data && Array.isArray(pollsRes.data.data)) {
+          setPolls(pollsRes.data.data)
         } else {
-          console.warn("Invalid polls response:", response)
+          console.warn("Invalid polls response:", pollsRes)
           setPolls([])
+        }
+
+        if (trendingRes.success && Array.isArray(trendingRes.data)) {
+          setTrending(trendingRes.data)
+        } else if (
+          trendingRes.success && trendingRes.data && Array.isArray((trendingRes.data as any).data)
+        ) {
+          // handle potential wrapped response
+          setTrending((trendingRes.data as any).data)
+        } else {
+          setTrending([])
+        }
+
+        if (statsRes.success && statsRes.data) {
+          const s: any = statsRes.data
+          setActivePolls(Number(s.active_polls || 0))
+          setTotalVotes(Number(s.total_votes || 0))
+        } else {
+          setActivePolls(0)
+          setTotalVotes(0)
+        }
+
+        if (usersRes.success && usersRes.data) {
+          // users list returns paginated envelope
+          const total = (usersRes.data as any).total
+          setCommunityCount(typeof total === 'number' ? total : 0)
+        } else {
+          setCommunityCount(0)
         }
       } catch (error) {
         console.error("Error fetching polls:", error)
         // If API fails, show empty state
         setPolls([])
+        setTrending([])
+        setActivePolls(0)
+        setTotalVotes(0)
+        setCommunityCount(0)
       } finally {
         setIsLoading(false)
       }
@@ -79,7 +120,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Active Polls</p>
-                  <p className="text-2xl font-bold">{polls?.length || 0}</p>
+                  <p className="text-2xl font-bold">{activePolls.toLocaleString()}</p>
                 </div>
               </div>
             </Card>
@@ -90,9 +131,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Votes</p>
-                  <p className="text-2xl font-bold">
-                    {(polls || []).reduce((sum, p) => sum + p.total_votes, 0).toLocaleString()}
-                  </p>
+                  <p className="text-2xl font-bold">{totalVotes.toLocaleString()}</p>
                 </div>
               </div>
             </Card>
@@ -103,7 +142,7 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Community</p>
-                  <p className="text-2xl font-bold">2.5K+</p>
+                  <p className="text-2xl font-bold">{communityCount.toLocaleString()}</p>
                 </div>
               </div>
             </Card>
@@ -126,9 +165,9 @@ export default function Home() {
               </Card>
             ))}
           </div>
-        ) : polls && polls.length > 0 ? (
+        ) : trending && trending.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {polls.map((poll, index) => (
+            {trending.map((poll, index) => (
               <div key={poll.id} className="animate-slide-in-up" style={{ animationDelay: `${index * 100}ms` }}>
                 <PollCard poll={poll} />
               </div>
