@@ -200,6 +200,25 @@ class ApiClient {
     })
   }
 
+  async updatePoll(pollId: string, pollData: Partial<{ title: string; description?: string; allow_multiple?: boolean }>): Promise<ApiResponse<Poll>> {
+    return this.request<Poll>(`/api/polls/${pollId}`, {
+      method: 'PUT',
+      body: JSON.stringify(pollData),
+    })
+  }
+
+  async deletePoll(pollId: string): Promise<ApiResponse> {
+    return this.request(`/api/polls/${pollId}`, { method: 'DELETE' })
+  }
+
+  async activatePoll(pollId: string): Promise<ApiResponse> {
+    return this.request(`/api/polls/${pollId}/activate`, { method: 'POST' })
+  }
+
+  async deactivatePoll(pollId: string): Promise<ApiResponse> {
+    return this.request(`/api/polls/${pollId}/deactivate`, { method: 'POST' })
+  }
+
   // Vote endpoints
   async castVote(pollId: string, optionIds: string[], anonId?: string): Promise<ApiResponse<Vote[]>> {
     return this.request<Vote[]>('/api/votes', {
@@ -218,6 +237,24 @@ class ApiClient {
 
   async getPollStats(pollId: string): Promise<ApiResponse<VoteStats>> {
     return this.request<VoteStats>(`/api/votes/poll/${pollId}/stats`)
+  }
+
+  async getUserVotes(userId: string, skip = 0, limit = 20): Promise<ApiResponse<PaginatedResponse<Vote>>> {
+    return this.request<PaginatedResponse<Vote>>(`/api/votes/user/${userId}?skip=${skip}&limit=${limit}`)
+  }
+
+  // Likes endpoints
+  async getUserLikes(userId: string, skip = 0, limit = 20): Promise<ApiResponse<PaginatedResponse<any>>> {
+    return this.request<PaginatedResponse<any>>(`/api/likes/user/${userId}?skip=${skip}&limit=${limit}`)
+  }
+
+  // User endpoints
+  async getUser(userId: string): Promise<ApiResponse<User>> {
+    return this.request<User>(`/api/users/${userId}`)
+  }
+
+  async getUserPolls(userId: string, skip = 0, limit = 20): Promise<ApiResponse<any>> {
+    return this.request<any>(`/api/users/${userId}/polls?skip=${skip}&limit=${limit}`)
   }
 
   // Health check

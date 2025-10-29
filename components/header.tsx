@@ -31,6 +31,11 @@ export function Header() {
           <Link href="/create" className="text-sm font-medium hover:text-primary transition-colors">
             Create
           </Link>
+          {isAuthenticated && (
+            <Link href="/profile" className="text-sm font-medium hover:text-primary transition-colors">
+              Profile
+            </Link>
+          )}
         </nav>
 
         <div className="hidden md:flex items-center gap-3">
@@ -86,6 +91,11 @@ export function Header() {
               <Link href="/create" className="text-sm font-medium hover:text-primary transition-colors">
                 Create
               </Link>
+              {isAuthenticated && (
+                <Link href="/profile" className="text-sm font-medium hover:text-primary transition-colors">
+                  Profile
+                </Link>
+              )}
               <div className="flex flex-col gap-2 pt-2 border-t border-border">
                 {isAuthenticated ? (
                   <>
