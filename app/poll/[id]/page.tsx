@@ -8,8 +8,9 @@ import { Card } from "@/components/ui/card"
 import { Header } from "@/components/header"
 import { Heart, Share2, ArrowLeft, MessageCircle, AlertCircle, Loader2 } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts"
-import { apiClient, Poll, VoteStats, getAnonymousId } from "@/lib/api"
+import { apiClient, Poll, VoteStats } from "@/lib/api"
 import { useAuth } from "@/contexts/AuthContext"
+import { useRouter } from "next/navigation"
 
 // Poll and Option interfaces are now imported from lib/api
 
@@ -18,6 +19,7 @@ const CHART_COLORS = ["#7c3aed", "#06b6d4", "#3b82f6", "#8b5cf6", "#ec4899"]
 export default function PollDetail() {
   const params = useParams()
   const pollId = params.id as string
+  const router = useRouter()
   const { isAuthenticated } = useAuth()
   const [poll, setPoll] = useState<Poll | null>(null)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
@@ -55,12 +57,14 @@ export default function PollDetail() {
   const handleVote = async () => {
     if (!selectedOption || hasVoted || !poll) return
 
+    if (!isAuthenticated) {
+      router.replace(`/login?next=/poll/${pollId}`)
+      return
+    }
+
     setIsVoting(true)
     try {
-      // Get anonymous ID for non-authenticated users
-      const anonId = !isAuthenticated ? getAnonymousId() : undefined
-      
-      const response = await apiClient.castVote(pollId, [selectedOption], anonId)
+      const response = await apiClient.castVote(pollId, [selectedOption])
       
       if (response.success && response.data) {
         // Refresh poll data to get updated vote counts

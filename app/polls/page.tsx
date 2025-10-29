@@ -25,8 +25,10 @@ export default function PollsPage() {
         setError("")
         const response = await apiClient.getPolls()
         
-        if (response.success && response.data) {
-          setPolls(response.data.data)
+        if (response.success && response.data !== undefined) {
+          const data: any = response.data as any
+          const list: Poll[] = Array.isArray(data) ? data : (data?.data ?? [])
+          setPolls(Array.isArray(list) ? list : [])
         } else {
           setError(response.message || "Failed to load polls")
         }
@@ -41,7 +43,7 @@ export default function PollsPage() {
     fetchPolls()
   }, [])
 
-  const filteredPolls = polls.filter(
+  const filteredPolls = (polls ?? []).filter(
     (poll) =>
       poll.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       poll.description?.toLowerCase().includes(searchQuery.toLowerCase()),

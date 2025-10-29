@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -11,14 +11,22 @@ import { Header } from "@/components/header"
 import { Plus, Trash2, ArrowLeft, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { apiClient } from "@/lib/api"
+import { useAuth } from "@/contexts/AuthContext"
 
 export default function CreatePoll() {
   const router = useRouter()
+  const { isAuthenticated, isLoading } = useAuth()
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [options, setOptions] = useState(["", ""])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace(`/login?next=/create`)
+    }
+  }, [isAuthenticated, isLoading, router])
 
   const addOption = () => {
     setOptions([...options, ""])
@@ -74,6 +82,15 @@ export default function CreatePoll() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  if (isLoading || !isAuthenticated) {
+    return (
+      <main className="min-h-screen bg-gradient-to-br from-background via-background to-accent/5">
+        <Header />
+        <div className="flex items-center justify-center h-96 text-muted-foreground">Redirecting to login…</div>
+      </main>
+    )
   }
 
   return (
